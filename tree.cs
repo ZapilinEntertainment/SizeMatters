@@ -3,19 +3,43 @@ using System.Collections;
 
 public class tree : MonoBehaviour {
 	public Transform mesh;
+	public GameObject sprite;
+	bool optimized=false;
 	public float maxsize=5;
 	public float minsize=0.8f;
 	bool stand=true;
 	Quaternion rotateTo;
+	public int points = 100;
 	// Use this for initialization
 	void Start () {
 		mesh.transform.localScale=Vector3.one*Random.Range(minsize,maxsize);;
 		transform.rotation=Quaternion.Euler(0,Random.value*360,0);
 		transform.parent=null;
+		sprite=Instantiate(Global.r_tree_oak_sprite,transform.position,transform.rotation) as GameObject;
+		sprite.transform.parent=transform;
+		sprite.transform.localScale=mesh.transform.localScale;
+		sprite.SetActive(false);
 	}
 
 	void Update () {
+		if (Global.pause) return;
+		float d=Vector3.Distance(Global.cam.transform.position,transform.position);
+		if (d>1000) {
+			if (!optimized) {
+				mesh.gameObject.SetActive(false);
+				sprite.SetActive(true);
+				optimized=true;
+			}
+		}
+		else {
+			if (optimized) {
+				mesh.gameObject.SetActive(true);
+				sprite.SetActive(false);
+				optimized=false;
+			}
+		}
 		if (rotateTo!=transform.rotation) transform.rotation=Quaternion.RotateTowards(transform.rotation,rotateTo,60*Time.deltaTime);
+		if (transform.position.y<-200) Destroy(gameObject);
 	}
 
 	public void Flatten(Vector3 pos) {
@@ -24,6 +48,7 @@ public class tree : MonoBehaviour {
 			x.transform.position=new Vector3(transform.position.x,0.1f,transform.position.z);
 			x.transform.rotation=Quaternion.Euler(0,transform.rotation.eulerAngles.y,0);
 		x.transform.localScale=mesh.transform.localScale;
+			Global.score+=points*2;
 		Destroy(gameObject);
 		}
 		else {
@@ -39,10 +64,9 @@ public class tree : MonoBehaviour {
 			stand=false;
 		}
 		else {
-			GameObject x=Instantiate(Global.r_fired_place,transform.position,Quaternion.identity) as GameObject;
-			x.transform.position=new Vector3(transform.position.x,0.1f,transform.position.z);
-			x.transform.rotation=Quaternion.Euler(90,Random.value*360,0);
+			Global.menu_script.AddFireplace(transform.position);
 			Destroy(gameObject);
+			Global.score+=points;
 		}
 	}
 }
