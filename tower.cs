@@ -10,6 +10,7 @@ public class tower : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		hp=maxhp;
+		if (transform.parent!=null) transform.parent=null;
 	}
 
 

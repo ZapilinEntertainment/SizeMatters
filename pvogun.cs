@@ -28,7 +28,7 @@ public class pvogun : MonoBehaviour {
 			Vector3 inpoint=Vector3.zero;
 			float mindist=range;
 			foreach (Collider c in ct) {
-				if (c.tag=="unit") {
+				if (c.tag=="unit"&&(c.transform.root.GetComponent<batcopter>()||c.transform.root.GetComponent<plane>())) {
 					inpoint=transform.InverseTransformPoint(c.transform.position);
 					if (inpoint.y>0&&inpoint.magnitude<mindist) {
 						ve=c.transform;
@@ -39,12 +39,17 @@ public class pvogun : MonoBehaviour {
 		if (ve!=null) target=ve;
 		StartCoroutine(Scan());
 	}
-	
+
+
+	public void Death() {
+		Global.sm.PvoFire(false);
+	}
+
 	// Update is called once per frame
 	void Update () {
 		if (Global.pause) return;
 		if (target) {
-			if (transform.InverseTransformPoint(target.position).y<=0||target.tag!="unit") {target=null;return;}	
+			if (transform.InverseTransformPoint(target.position).y<=0||target.tag!="unit"||Vector3.Distance(transform.position,target.position)>range) {target=null;return;}	
 			if (!emit) {
 				emit=true;
 				if (Global.sm&&Global.sound&&Global.sm.out_back_clip!=2) {
@@ -74,8 +79,8 @@ public class pvogun : MonoBehaviour {
 					Global.sm.PvoFire(false);
 				}
 			}
-			transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.Euler(Vector3.zero),rot_speed*Time.deltaTime);
-			gunwheel.transform.rotation=Quaternion.RotateTowards(gunwheel.transform.rotation,Quaternion.Euler(Vector3.zero),rot_speed*Time.deltaTime);
+			transform.rotation=Quaternion.RotateTowards(transform.rotation,Quaternion.LookRotation(transform.forward,Vector3.up),rot_speed*Time.deltaTime);
+			gunwheel.transform.rotation=Quaternion.RotateTowards(gunwheel.transform.rotation,Quaternion.LookRotation(transform.forward,Vector3.up),rot_speed*Time.deltaTime);
 		}
 		if (t>0) {t-=Time.deltaTime;if(t<0) t=0;}
 	}

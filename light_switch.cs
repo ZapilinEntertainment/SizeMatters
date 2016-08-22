@@ -13,6 +13,11 @@ public class light_switch : MonoBehaviour {
 	public Texture chosen_frame_tx;
 	public Texture back_tx;
 	public Texture module_empty;
+	public Texture kitty_icon;
+	public Texture start_mission_tx;
+	public Texture missions_back_tx;
+	public Texture logo_tx;
+
 	public Light main_light;
 	public Transform cam;
 	public Vector3 cam_menu_pos=new Vector3(35.5f,20,34);
@@ -31,30 +36,52 @@ public class light_switch : MonoBehaviour {
 	int sh=600;
 	int sw=800;
 	public byte chosen_module=255;
+	byte chosen_mission=0;
 	Rect r1,r2,r3,r4,r5;
 	int gui_state=0;
 	public Renderer[] rrs;
 	public float speed=10;
 	public bool powered=false;
-	bool settings=false;
-	bool help=false;
-	bool credits=false;
 	bool weaponry=false;
 	public int lastmission=10;
 	byte i=0;
+	bool cinematic=false;
+	public Camera cin_cam;
+	public Transform focus;
+	public textor txtr;
+	bool settings =false;
+	bool help=false;
+	bool step_traces=false;
+	byte quality_lvl=5;
+	bool gui_set=false;
+	public string gamedata_string="0010";
+	bool console=false;
+	string console_text="";
 	// Use this for initialization
 
 	void Awake () {
 		Global.nongamescene=true;
 		Global.cam=cam.gameObject;
 		Global.pause=false;
+		if (PlayerPrefs.HasKey("gdata")) {
+			gamedata_string=PlayerPrefs.GetString("gdata");
+			txtr.SetLanguage((byte)(int.Parse(gamedata_string.Substring(0,1))));
+			if (gamedata_string.Length>1) {
+				if (gamedata_string[1]=='1') step_traces=true; else step_traces=false;
+			} else step_traces=false;
+			if (gamedata_string.Length>2) {
+				if (gamedata_string[2]=='1') Global.sound=true;
+				else Global.sound=false;
+			}
+			else Global.sound=true;
+		}
+		else {
+			gui_state=3;
+		}
+		quality_lvl=(byte)QualitySettings.GetQualityLevel();
 	}
 
 	void Start () {
-		//if (PlayerPrefs.HasKey("lastmission")) {
-		//	lastmission=PlayerPrefs.GetInt("lastmission");
-		//}
-		//else {PlayerPrefs.SetInt("lastmission",0);}
 		sh=Screen.height;
 		sw=Screen.width;
 		k=sh/9;
@@ -71,14 +98,78 @@ public class light_switch : MonoBehaviour {
 		}
 		cam.position=cam_menu_pos;
 		cam.rotation=Quaternion.Euler(cam_menu_rot);
+
 		if (PlayerPrefs.HasKey("mechcode")) {
 			mechcode=PlayerPrefs.GetString("mechcode");
 			if (mechcode.Length<20) mechcode=mechcode+new string ('0',20-mechcode.Length);
 		}
 		else mechcode="0102";
-		modules=new GameObject[mechcode.Length/2];
+
+		modules=new GameObject[10];
 		for (byte i=0;i<mechcode.Length/2;i++) {
 			SpawnModule(mechcode.Substring(i*2,2),i);
+		}
+		Global.pause=false;
+		Time.timeScale=1;
+
+		Global.ind_green_tx=Resources.Load<Texture>("ind_green");
+		Global.ind_red_tx=Resources.Load<Texture>("ind_red");
+
+		if (PlayerPrefs.HasKey("walkthrough")) {
+			lastmission=int.Parse(PlayerPrefs.GetString("walkthrough").Substring(0,2));
+		}
+		else {
+			lastmission=1;
+			PlayerPrefs.SetString("walkthrough","01");
+		}
+
+		if (Global.to_hangar) {
+			Global.to_hangar=false;
+			gui_state=1;
+			r1=new Rect(sw-2*k,0,2*k,k/2);
+			r5=new Rect(sw-2*k,0,2*k,k);
+			r3=new Rect(sw-2*k,k,2*k,k);
+			LightsOn();
+			chosen_module=255;
+			chosen_mission=Global.lastmission;
+			settings=false;
+			Global.cam.GetComponent<Camera>().pixelRect=new Rect(0,0,sw/2+k,sh);
+			Global.cam.transform.LookAt(focus.position);
+		}
+
+		//lastmission=10;
+	}
+
+	void Update () {
+	if (Input.GetKey("c")) {
+			if (Input.GetKey("a")) {
+				if (Input.GetKeyDown("t")) {
+					if (!console) console=true;
+				}
+				}}
+		//	if (!cinematic) {
+		//		Global.cam.SetActive(false);
+		//		cin_cam.enabled=true;
+		//		cinematic=true;
+		//	}
+		//	else {
+		//		Global.cam.SetActive(true);
+		//		cin_cam.enabled=false;
+		//		cinematic=false;
+	//		}
+
+	}
+
+	void LateUpdate() {
+		if (!cinematic&&gui_state==1) {
+			Vector2 mdir=new Vector2(Input.GetAxis("Mouse X"),Input.GetAxis("Mouse Y"));
+			if (Input.GetMouseButton(0)) {
+				Vector3 rdir=transform.TransformDirection(Vector3.up);
+				rdir.x=0;
+				Global.cam.transform.RotateAround(focus.position,rdir,mdir.x*200*Time.deltaTime);
+				//rdir=Vector3.right;
+				//Global.cam.transform.RotateAround(focus.position,rdir,mdir.y*140*Time.deltaTime);
+			}
 		}
 	}
 
@@ -113,11 +204,18 @@ public class light_switch : MonoBehaviour {
 			x=Instantiate(Resources.Load<GameObject>("artbattery")) as GameObject;
 			if (index%2==0) right=true; else right=false;
 			break;
+		case "07":
+			x=Instantiate(Resources.Load<GameObject>("pvo_launcher")) as GameObject;
+			if (index%2==0) right=true; else right=false;
+			break;
 		case "08":
 			x=Instantiate(Resources.Load<GameObject>("shlauncher")) as GameObject;
 			if (index%2==0) right=true; else right=false;
 			break;
-			
+		case "09":
+			x=Instantiate(Resources.Load<GameObject>("shield_gen")) as GameObject;
+			if (index%2==0) right=true; else right=false;
+			break;	
 		}
 
 		Vector3 pos=Vector3.zero;
@@ -131,16 +229,16 @@ public class light_switch : MonoBehaviour {
 			case 4: slot_correction=new Vector3(1.5f,3,3.5f); break;
 			case 5: slot_correction=new Vector3(-1.5f,3,3.5f); break;
 			case 6: slot_correction=new Vector3(-2,3,-3.5f); break;
-			case 7: slot_correction=new Vector3(-1.5f,3,-3.5f); break;
+			case 7: slot_correction=new Vector3(2f,3,-3.5f); break;
 			case 8: slot_correction=new Vector3(1.5f,3,-3.5f); break;
-			case 9: slot_correction=new Vector3(2,3,-3.5f); break;
+			case 9: slot_correction=new Vector3(-1.5f,3,-3.5f); break;
 			}
 		}
 		modules[index]=x;
 		x.transform.position=pos;
 		x.transform.localPosition+=slot_correction+x.GetComponent<moduleInfo>().correction_vector;
-		x.transform.localRotation=Quaternion.Euler(0,0,0);
-		if (index!=modules.Length-1) mechcode=mechcode.Substring(0,index*2)+x.GetComponent<moduleInfo>().code.Substring(0,2)+mechcode.Substring((index+1)*2,(modules.Length-index-1)*2);
+		if (index<6) x.transform.localRotation=Quaternion.Euler(0,0,0);else x.transform.localRotation=Quaternion.Euler(0,180,0);
+		if (index!=mechcode.Length/2-1) mechcode=mechcode.Substring(0,index*2)+x.GetComponent<moduleInfo>().code.Substring(0,2)+mechcode.Substring((index+1)*2,mechcode.Length-(index+1)*2);
 		else {mechcode=mechcode.Substring(0,index*2)+x.GetComponent<moduleInfo>().code.Substring(0,2);}
 	}
 
@@ -149,109 +247,272 @@ public class light_switch : MonoBehaviour {
 			r.material.SetColor("_EmissionColor",Color.white);
 		}
 		powered=true;
-		AudioSource.PlayClipAtPoint(mech_activated,cam.position);
+		if (Global.sound) Global.cam.GetComponent<AudioSource>().PlayOneShot(mech_activated);
 	}
 	public void LightsOff() {
 		foreach (Renderer r in rrs) {
 			r.material.SetColor("_EmissionColor",Color.black);
 		}
 		powered=false;
-		AudioSource.PlayClipAtPoint(mech_deactivated,cam.position);
+		if (Global.sound) Global.cam.GetComponent<AudioSource>().PlayOneShot(mech_deactivated);
 	}
 
 	void OnGUI () {
+		if (cinematic) return;
+		if (!gui_set) {
+			GUI.skin.GetStyle("Button").fontSize=k/4;
+			GUI.skin.GetStyle("Label").fontSize=k/4;
+			GUI.skin.label.clipping=TextClipping.Overflow;
+			GUI.skin.button.clipping=TextClipping.Overflow;
+			gui_set=true;
+		}
 		switch (gui_state) {
 		case 0: 
+			GUI.DrawTexture(new Rect(sw-2*k,0,2*k,2*k),logo_tx,ScaleMode.StretchToFill);
 			if (GUI.Button(r1,start_button_tx)) {
 				gui_state=1;
-				r1=new Rect(sw-2*k,2*k,2*k,k/2);
+				r1=new Rect(sw-2*k,0,2*k,k/2);
 				r5=new Rect(sw-2*k,0,2*k,k);
 				r3=new Rect(sw-2*k,k,2*k,k);
 				LightsOn();
-				settings=false;
-				credits=false;
-				help=false;
 				chosen_module=255;
+				chosen_mission=0;
+				settings=false;
+				help=false;
+				Global.cam.GetComponent<Camera>().pixelRect=new Rect(0,0,sw/2+k,sh);
+				Global.cam.transform.LookAt(focus.position);
 		}
 			if (GUI.Button(r2,settings_button_tx)) {
-				if (!settings) {
-					settings=true;credits=false;help=false;
-				}
-				else settings=false;
+				settings=!settings;
+				help=false;
 			}
 			if (GUI.Button(r3,help_button_tx)) {
-				if (!help) {help=true;settings=false;credits=false;}
-				else help=false;
+				help=!help;
+				settings=false;
 			}
-			if (GUI.Button(r4,credits_button_tx)) {
-				if (!credits) {help=false;settings=false;credits=true;}
-				else credits=false;
-			}
+			//if (GUI.Button(r4,credits_button_tx)) {				
+			//}
 			if (GUI.Button(r5,exit_button_tx)) {
 				Application.Quit();
 			}
+		if (settings) {
+				if (GUI.Button(new Rect(sw-5*k,0,3*k,k/2),txtr.data_clean_button)) {
+					gui_state=4;
+				}
+				if (GUI.Button(new Rect(sw-5*k,k/2,3*k,k/2),txtr.language_button)) {
+					PlayerPrefs.DeleteKey("walkthrough");
+					gui_state=3;
+				}
+
+				GUI.Label(new Rect(r2.x-3*k,r2.y-k,2*k,k/2),txtr.sound_button);
+				if (Global.sound) {
+					if (GUI.Button(new Rect(r2.x-k/2,r2.y-k,k/2,k/2),Global.ind_green_tx)) {
+						Global.sound=false;
+						if (PlayerPrefs.HasKey("gdata")) {
+							if (gamedata_string.Length>3) gamedata_string=gamedata_string.Substring(0,2)+'0'+gamedata_string.Substring(3,gamedata_string.Length-3);
+							else {
+								if (gamedata_string.Length<2) gamedata_string="000";
+								else gamedata_string=gamedata_string.Substring(0,2)+'0';
+							}
+						}
+						else {
+							gamedata_string="000";
+						}
+						PlayerPrefs.SetString("gdata",gamedata_string);
+					}
+				}
+				else {
+					if (GUI.Button(new Rect(r2.x-k/2,r2.y-k,k/2,k/2),Global.ind_red_tx)) {
+						Global.sound=true;
+						if (PlayerPrefs.HasKey("gdata")) {
+							if (gamedata_string.Length>3) gamedata_string=gamedata_string.Substring(0,2)+'1'+gamedata_string.Substring(3,gamedata_string.Length-3);
+							else {
+								if (gamedata_string.Length<2) gamedata_string="001";
+								else gamedata_string=gamedata_string.Substring(0,2)+'1';
+							}
+						}
+						else {
+							gamedata_string="001";
+						}
+						PlayerPrefs.SetString("gdata",gamedata_string);
+					}
+				}
+
+				GUI.Label(new Rect(r2.x-3*k,r2.y,2*k,k/2),txtr.step_traces_button);
+				if (step_traces) {
+					if (GUI.Button(new Rect(r2.x-k/2,r2.y,k/2,k/2),Global.ind_green_tx)) {
+						step_traces=false;
+						gamedata_string=PlayerPrefs.GetString("gdata");
+						if (gamedata_string.Length>2) PlayerPrefs.SetString("gdata",gamedata_string.Substring(0,1)+'0'+gamedata_string.Substring(2,gamedata_string.Length-2));
+						else PlayerPrefs.SetString("gdata",gamedata_string.Substring(0,1)+'0');
+					}
+				}
+				else {
+					if (GUI.Button(new Rect(r2.x-k/2,r2.y,k/2,k/2),Global.ind_red_tx)) {
+						step_traces=true;
+						string s2=PlayerPrefs.GetString("gdata");
+						if (s2.Length>2) PlayerPrefs.SetString("gdata",s2.Substring(0,1)+'1'+s2.Substring(2,s2.Length-2));
+						else PlayerPrefs.SetString("gdata",s2.Substring(0,1)+'1');
+					}
+				}
+				GUI.Label(new Rect(r2.x-3*k,r2.y+k,2*k,k/2),txtr.graphics_quality_button);
+				if (GUI.Button(new Rect(r2.x-3*k,r2.y+2*k,2*k,k/2),"Fastest")) {QualitySettings.SetQualityLevel(0);quality_lvl=0;}
+				if (GUI.Button(new Rect(r2.x-3*k,r2.y+2.5f*k,2*k,k/2),"Fast")) {QualitySettings.SetQualityLevel(1);quality_lvl=1;}
+				if (GUI.Button(new Rect(r2.x-3*k,r2.y+3*k,2*k,k/2),"Simple")) {QualitySettings.SetQualityLevel(2);quality_lvl=2;}
+				if (GUI.Button(new Rect(r2.x-3*k,r2.y+3.5f*k,2*k,k/2),"Good")) {QualitySettings.SetQualityLevel(3);quality_lvl=3;}
+				if (GUI.Button(new Rect(r2.x-3*k,r2.y+4*k,2*k,k/2),"Beautiful")) {QualitySettings.SetQualityLevel(4);quality_lvl=4;}
+				if (GUI.Button(new Rect(r2.x-3*k,r2.y+4.5f*k,2*k,k/2),"Fantastic")) {QualitySettings.SetQualityLevel(5);quality_lvl=5;}
+				Rect cr=new Rect(r2.x-3*k,r2.y+2*k,2*k,k/2);
+				switch (quality_lvl) {
+				case 1:cr.y+=k/2;break; 
+				case 2:cr.y+=k;break;
+				case 3: cr.y+=1.5f*k;break;
+				case 4: cr.y+=2*k;break;
+				case 5: cr.y+=2.5f*k;break;
+				}
+				GUI.DrawTexture(cr,chosen_frame_tx,ScaleMode.StretchToFill);
+				GUI.DrawTexture(r2,chosen_frame_tx,ScaleMode.StretchToFill);
+		}
+			if (console) {
+				console_text=GUILayout.TextField(console_text);
+				if (GUILayout.Button("Submit")) {
+					switch (console_text) {
+					case "missions": lastmission=10;break;
+					case "too hard": Global.invincible=true;break;	
+					}
+					console=false;
+				}
+			}
+			if (help) {
+				GUI.DrawTexture(new Rect(r1.x-sh/2,0,sh/2,sh),txtr.help_tx);
+				GUI.DrawTexture(r3,chosen_frame_tx,ScaleMode.StretchToFill);
+			}
 			break;
 		case 1:
-			int py=(int)r1.y;
+			GUI.DrawTexture(new Rect(sw/2+k,0,sw/2-k,sh),missions_back_tx);
+			int py=(int)(r1.y+k);
 			for (i=1;i<=lastmission;i++) {
-				if (GUI.Button(new Rect(r1.x,py,r1.width,r1.height),"mission"+i.ToString())) {PlayerPrefs.SetString("mechcode",mechcode);SceneManager.LoadScene(i);}
+				if (i!=chosen_mission) {
+				    if (GUI.Button(new Rect(r1.x,py,r1.width,r1.height),"mission"+i.ToString())) {chosen_mission=i;}
+				}
+				else {
+					if (GUI.Button(new Rect(r1.x,py,r1.width,r1.height),start_mission_tx)) {
+						PlayerPrefs.SetString("mechcode",mechcode);
+						SceneManager.LoadScene(i);
+					}
+				}
 				py+=(int)(k/2);
 				}
-				int lm=(int)(1.5f*k);
+			if (chosen_mission!=0) {
+				GUI.DrawTexture(new Rect(r1.x,chosen_mission*k/2+r1.y+k/2,r1.width,r1.height),chosen_frame_tx,ScaleMode.StretchToFill);
+				Rect mbr=new Rect(sw/2+k,6*k,sw/2-k,3*k);
+				switch (chosen_mission) {
+				case 1: GUI.Label(mbr,txtr.m1_briefing);break;
+				case 2: GUI.Label(mbr,txtr.m2_briefing);break;
+				case 3: GUI.Label(mbr,txtr.m3_briefing);break;
+				case 4: GUI.Label(mbr,txtr.m4_briefing);break;
+				case 5: GUI.Label(mbr,txtr.m5_briefing);break;
+				case 6: GUI.Label(mbr,txtr.m6_briefing);break;
+				case 7: GUI.Label(mbr,txtr.m7_briefing);break;
+				case 8: GUI.Label(mbr,txtr.m8_briefing);break;
+				case 9: GUI.Label(mbr,txtr.m9_briefing);break;
+				case 10: GUI.Label(mbr,txtr.m10_briefing);break;
+				}
+				GUI.DrawTexture(new Rect(sw/2+k,3*k,3*k,3*k),kitty_icon,ScaleMode.StretchToFill);
+			}
+				
+			int lm=(int)(1.5f*k);
 			moduleInfo mi=null;
+			Texture module_picture=module_empty;
 				if (modules[1]!=null) {
 				mi=modules[1].GetComponent<moduleInfo>();
-				if 	(GUI.Button(new Rect(r1.x-3*k,r1.y+k,k,k),mi.picture)) chosen_module=1;
 				}
-				if (modules[0]!=null) {
-					mi=modules[0].GetComponent<moduleInfo>();
-				if 	(GUI.Button(new Rect(r1.x-k,r1.y+k,k,k),mi.picture)) chosen_module=0;
-				}
-			Texture module_picture=module_empty;
+
+			int d=k;
+
+			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
+			if 	(GUI.Button(new Rect(r1.x-3*k,r1.y+k/2+d,k,k),module_picture)) chosen_module=1;
+
+			mi=null;
+			if (modules[0]!=null) {mi=modules[0].GetComponent<moduleInfo>();	}
+			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
+			if 	(GUI.Button(new Rect(r1.x-k,r1.y+k/2+d,k,k),module_picture)) chosen_module=0;
+
+			if (lastmission>1) {
 			mi=null;
 			if (modules[2]!=null) {mi=modules[2].GetComponent<moduleInfo>();	}
 			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
-			if 	(GUI.Button(new Rect(r1.x-k,r1.y,k/2,k/2),module_picture)) chosen_module=2;
+			if 	(GUI.Button(new Rect(r1.x-k,r1.y+d,k/2,k/2),module_picture)) chosen_module=2;
 
 			mi=null;
 			if (modules[3]!=null) {mi=modules[3].GetComponent<moduleInfo>();}
 			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
-			if 	(GUI.Button(new Rect(r1.x-2.5f*k,r1.y,k/2,k/2),module_picture)) chosen_module=3;
-
+			if 	(GUI.Button(new Rect(r1.x-2.5f*k,r1.y+d,k/2,k/2),module_picture)) chosen_module=3;
+				if (lastmission>2) {
 			mi=null;
 			if (modules[4]!=null) {mi=modules[4].GetComponent<moduleInfo>();}
 			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
-			if 	(GUI.Button(new Rect(r1.x-0.5f*k,r1.y,k/2,k/2),module_picture)) chosen_module=4;
+			if 	(GUI.Button(new Rect(r1.x-0.5f*k,r1.y+d,k/2,k/2),module_picture)) chosen_module=4;
 
 			mi=null;
 			if (modules[5]!=null) {mi=modules[5].GetComponent<moduleInfo>();}
 			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
-			if 	(GUI.Button(new Rect(r1.x-3*k,r1.y,k/2,k/2),module_picture)) chosen_module=5;
+			if 	(GUI.Button(new Rect(r1.x-3*k,r1.y+d,k/2,k/2),module_picture)) chosen_module=5;
+					if (lastmission>3) {
+			mi=null;
+			if (modules[6]!=null) {mi=modules[6].GetComponent<moduleInfo>();}
+			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
+			if 	(GUI.Button(new Rect(r1.x-k,r1.y+1.5f*k+d,k/2,k/2),module_picture)) chosen_module=6;
 
+			mi=null;
+			if (modules[7]!=null) {mi=modules[7].GetComponent<moduleInfo>();}
+			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
+			if 	(GUI.Button(new Rect(r1.x-2.5f*k,r1.y+1.5f*k+d,k/2,k/2),module_picture)) chosen_module=7;
+						if (lastmission>4) {
+			mi=null;
+			if (modules[8]!=null) {mi=modules[8].GetComponent<moduleInfo>();}
+			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
+			if 	(GUI.Button(new Rect(r1.x-k/2,r1.y+1.5f*k+d,k/2,k/2),module_picture)) chosen_module=8;
+
+			mi=null;
+			if (modules[9]!=null) {mi=modules[9].GetComponent<moduleInfo>();}
+			if (mi!=null) module_picture=mi.picture; else module_picture=module_empty;
+			if 	(GUI.Button(new Rect(r1.x-3*k,r1.y+1.5f*k+d,k/2,k/2),module_picture)) chosen_module=9;
+		}}}}
 				Rect ch_rect=new Rect(-k,-k,k,k);
 		
 
 			if (chosen_module!=255) {
 				if (chosen_module<2) {
-					if (GUI.Button(new Rect(r1.x-5*k,r1.y,2*k,k/2),"Heavy Plasmagun")) SpawnModule("01",chosen_module);
-					if (GUI.Button(new Rect(r1.x-5*k,r1.y+k/2,2*k,k/2),"Heavy Chaingun")) SpawnModule("02",chosen_module);
-					if (GUI.Button(new Rect(r1.x-5*k,r1.y+k,2*k,k/2),"Heavy Rocket Launcher")) SpawnModule("03",chosen_module);
+					if (GUI.Button(new Rect(r1.x-5.5f*k,r1.y,2.5f*k,k/2),txtr.plasmagun_name)) SpawnModule("01",chosen_module);
+					if (GUI.Button(new Rect(r1.x-5.5f*k,r1.y+k/2,2.5f*k,k/2),txtr.chaingun_name)) SpawnModule("02",chosen_module);
+				if (lastmission>2) {
+						if (GUI.Button(new Rect(r1.x-5.5f*k,r1.y+k,2.5f*k,k/2),txtr.rlauncher_name)) SpawnModule("03",chosen_module);
+				}
 				}
 				else {
-					if (GUI.Button(new Rect(r1.x-5*k,r1.y,2*k,k/2),"Air Defence Gun")) SpawnModule("05",chosen_module);
-					if (GUI.Button(new Rect(r1.x-5*k,r1.y+k/2,2*k,k/2),"Artillery Tower")) SpawnModule("06",chosen_module);
-					if (GUI.Button(new Rect(r1.x-5*k,r1.y+k,2*k,k/2),"Air Defence Rockets")) SpawnModule("07",chosen_module);
-					if (GUI.Button(new Rect(r1.x-5*k,r1.y+1.5f*k,2*k,k/2),"Rocket Launchers")) SpawnModule("08",chosen_module);
-					if (GUI.Button(new Rect(r1.x-5*k,r1.y+2*k,2*k,k/2),"Shield Generator")) SpawnModule("09",chosen_module);
+					Rect amr=new Rect(r1.x-5.5f*k,r1.y,2.5f*k,k/2);
+					if (GUI.Button(amr,txtr.pvogun_name)) SpawnModule("05",chosen_module); amr.y+=k/2;
+					if (lastmission>4) {if (GUI.Button(amr,txtr.pvorockets_name)) SpawnModule("07",chosen_module); amr.y+=k/2;}
+					if (lastmission>2)	{if (GUI.Button(amr,txtr.shield_gen_name)) SpawnModule("09",chosen_module); amr.y+=k/2;}
+
+					if (chosen_module<6) {
+						if (GUI.Button(amr,txtr.artillery_name)) SpawnModule("06",chosen_module); amr.y+=k/2;
+						if (lastmission>3) {if (GUI.Button(amr,txtr.sh_rockets)) SpawnModule("08",chosen_module); amr.y+=k/2;}
+					}
 				}
 			
 				switch (chosen_module) {
-				case 0: ch_rect=new Rect(r1.x-k,r1.y+k,k,k);break;
-				case 1: ch_rect=new Rect(r1.x-3*k,r1.y+k,k,k); break;
-				case 2: ch_rect=new Rect(r1.x-k,r1.y,k/2,k/2);break;
-				case 3: ch_rect=new Rect(r1.x-2.5f*k,r1.y,k/2,k/2); break;
-				case 4: ch_rect=new Rect(r1.x-0.5f*k,r1.y,k/2,k/2);break;
-				case 5: ch_rect=new Rect(r1.x-3*k,r1.y,k/2,k/2); break;
+				case 0: ch_rect=new Rect(r1.x-k,r1.y+k/2+d,k,k);break;
+				case 1: ch_rect=new Rect(r1.x-3*k,r1.y+k/2+d,k,k); break;
+				case 2: ch_rect=new Rect(r1.x-k,r1.y+d,k/2,k/2);break;
+				case 3: ch_rect=new Rect(r1.x-2.5f*k,r1.y+d,k/2,k/2); break;
+				case 4: ch_rect=new Rect(r1.x-0.5f*k,r1.y+d,k/2,k/2);break;
+				case 5: ch_rect=new Rect(r1.x-3*k,r1.y+d,k/2,k/2); break;
+				case 6: ch_rect=new Rect(r1.x-k,r1.y+1.5f*k+d,k/2,k/2); break;
+				case 7: ch_rect=new Rect(r1.x-2.5f*k,r1.y+1.5f*k+d,k/2,k/2); break;
+				case 8: ch_rect=new Rect(r1.x-k/2,r1.y+1.5f*k+d,k/2,k/2); break;
+				case 9: ch_rect=new Rect(r1.x-3*k,r1.y+1.5f*k+d,k/2,k/2); break;
 				}
 				GUI.DrawTexture(ch_rect,chosen_frame_tx,ScaleMode.StretchToFill);
 			}
@@ -267,7 +528,27 @@ public class light_switch : MonoBehaviour {
 					PlayerPrefs.SetString("mechcode",mechcode);
 				}
 				main_light.enabled=false;
+				Global.cam.GetComponent<Camera>().pixelRect=new Rect(0,0,sw,sh);
+				Global.cam.transform.rotation=Quaternion.Euler(cam_menu_rot);
+				Global.cam.transform.position=cam_menu_pos;
 				LightsOff();
+			}
+			break;
+			case 3: //choosing language
+			if (GUI.Button(new Rect(sw/2-k,sh/2-k/2,2*k,k/2),"Русский язык")) {txtr.SetLanguage(1);gui_state=0;}
+			if (GUI.Button(new Rect(sw/2-k,sh/2,2*k,k/2),"English")) {txtr.SetLanguage(0);gui_state=0;}
+			break;
+		   case 4://clear accept
+			GUI.DrawTexture(new Rect(sw/2-3*k,sh/2-k,6*k,3*k),missions_back_tx);
+			GUI.Label(new Rect(sw/2-3*k,sh/2-k,6*k,2*k),txtr.clear_request_label);
+			if (GUI.Button(new Rect(sw/2-3*k,sh/2+k,3*k,k), txtr.data_clean_button)) {
+				PlayerPrefs.DeleteKey("walkthrough");
+				PlayerPrefs.DeleteKey("gdata");
+				PlayerPrefs.DeleteKey("mechcode");
+				SceneManager.LoadScene(0);
+			}
+			if (GUI.Button(new Rect(sw/2,sh/2+k,3*k,k), txtr.to_menu_button)) {
+				gui_state=0;
 			}
 			break;
 		}

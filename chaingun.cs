@@ -76,7 +76,7 @@ public class chaingun : MonoBehaviour {
 				}
 			}
 			else {
-				temperature+=temp_speed*Time.deltaTime;
+				temperature+=temp_speed*Time.deltaTime/Global.bonus;
 				ammo-=ammo_consumption*Time.deltaTime;
 				if (ammo<0) ammo=0;
 				if (ammo==0) {
@@ -120,8 +120,13 @@ public class chaingun : MonoBehaviour {
 				if (Physics.Raycast(gun_points[i].position,transform.forward,out rh,range)) {
 					Collider[] cs=Physics.OverlapSphere(rh.point,damage_radius);
 					foreach (Collider c in cs) {if (c.transform.root.gameObject.layer!=8) c.transform.root.SendMessage("ApplyDamage",new Vector4(rh.point.x,rh.point.y,rh.point.z,damage*Time.deltaTime),SendMessageOptions.DontRequireReceiver);}
+					if (rh.collider.transform.root.gameObject.layer!=11) {
 					far_ps[i].transform.position=rh.point;
 					far_ps[i].Emit(5);
+					}
+					else {
+						Global.WaterExpl(rh.point);
+					}
 					lrs[i].SetPosition(1,rh.point);
 				}
 				else {
@@ -135,6 +140,13 @@ public class chaingun : MonoBehaviour {
 				if (temperature<0) temperature=0;
 			}
 		}
+	}
+
+	public void Death() {
+		Destroy(near_ps);
+		Destroy(bullets_fall);
+		foreach (LineRenderer lr in lrs) {Destroy(lr);}
+		Global.sm.GunSound(right,true,false);
 	}
 
 	void OnGUI () {

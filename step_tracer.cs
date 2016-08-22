@@ -11,9 +11,19 @@ public class step_tracer : MonoBehaviour {
 	public uint steps_count=50;
 	uint step_index=0;
 	public bool make_traces=true;
+	water waterscript;
 
 	void Start () {
 		projectors=new GameObject[steps_count];
+		if (PlayerPrefs.HasKey("gdata")) {
+			string s=PlayerPrefs.GetString("gdata");
+			if (s.Length>1) {
+				if (s[1]=='1') make_traces=true;
+				else make_traces=false;
+			}
+			else make_traces=false;
+		}
+		else make_traces=false;
 		if (make_traces) {if (Global.quality>=4) make_traces=true; else make_traces=false;}
 	}
 
@@ -27,7 +37,7 @@ public class step_tracer : MonoBehaviour {
 			pos=right_feet.transform.position;
 		}
 
-		Instantiate(dust_effect,pos,transform.root.rotation);
+		if (dust_effect!=null) Instantiate(dust_effect,pos,transform.root.rotation);
 
 		var layerMask=1<<8;
 		if (make_traces&&Physics.Raycast(pos,Vector3.down,out hit,pos.y+20,layerMask)) {
@@ -47,10 +57,18 @@ public class step_tracer : MonoBehaviour {
 			StartCoroutine(StepDelay(pos,left_leg));
 		}
 		left_leg=!left_leg;
+		if (waterscript!=null) waterscript.WaterSplash(pos);
 	}
 
 	IEnumerator StepDelay(Vector3 pos,bool left) {
 		yield return new WaitForSeconds(0.5f);
 		Global.sm.StepSound(pos,left);
+	}
+
+	public void WaterTracing( water w) {
+		waterscript=w;
+	}
+	public void StopWaterTracing (water w) {
+		if (waterscript==w) waterscript=null;
 	}
 }

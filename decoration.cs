@@ -7,9 +7,14 @@ public class decoration : MonoBehaviour {
 	public byte sound=0; //0-nothing, 1- falling tree, 2- metal scrap
 	public GameObject flatten_corpse;
 	public bool use_dust=false;
+	public bool bigdust=false;
 	public int points=100;
 
 	void Start() {hp=maxhp;}
+
+	void Update() {
+		if (transform.position.y<-200) Destroy(gameObject);
+	}
 
 	public void Flatten(Vector3 pos) {
 		if (sound!=0) {
@@ -29,6 +34,7 @@ public class decoration : MonoBehaviour {
 	}
 
 	public void ApplyDamage(Vector4 mg) {
+
 		if (mg.w>maxhp) {
 			Global.menu_script.AddFireplace(transform.position);
 			Global.score+=points;
@@ -37,10 +43,14 @@ public class decoration : MonoBehaviour {
 		else {
 			hp-=mg.w;
 			if (hp<=0) {
-				if (use_dust) Global.ConcreteDustRequest(transform.position);
+				if (use_dust) {
+					if (!bigdust) Global.ConcreteDustRequest(transform.position);
+					else Global.BigDustRequest(transform.position);
+				}
 				Global.score+=points;
 				Destroy(gameObject);
 			}
 		}
 	}
+		
 }

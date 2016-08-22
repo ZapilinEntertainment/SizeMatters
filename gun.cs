@@ -100,7 +100,7 @@ public class gun : MonoBehaviour {
 				else {endfire=false;far_ps.Stop();}
 				if (endfire) {far_ps.transform.position=prh.point+new Vector3(0,ray_thick/2,1);far_sprite.transform.position=prh.point;}
 				else {far_sprite.transform.position=gun_point.position+gun_trunk.forward*range;}
-					temperature+=temp_speed*Time.deltaTime;
+					temperature+=temp_speed*Time.deltaTime/Global.bonus;
 				}}
 			lr.SetPosition(0,gun_point.position);
 			lr.SetPosition(1,gun_point.position+gun_trunk.forward*range);
@@ -123,7 +123,14 @@ public class gun : MonoBehaviour {
 			if (temperature<0) temperature=0;
 		}
 	}
-		
+
+
+	public void Death() {
+		Destroy(near_ps);
+		Destroy(far_ps);
+		Destroy(lr);
+		Global.sm.GunSound(right,true,false);
+	}
 
 	void OnGUI () {
 		if (Global.pause||!Global.playable) return;

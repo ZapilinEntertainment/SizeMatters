@@ -8,9 +8,12 @@ public static class Global {
 	public static int gui_piece;
 	public static bool pause;
 	public static bool sound=true;
+	public static bool water_on_level=false;
 	public static soundMaster sm;
+	public static textor txtr;
 	public static Vector3 aim;
 	public static float bonus=1;
+	public static bool invincible=false;
 
 	public static GameObject[] r_shot_effect;
 	public static GameObject[] r_shot_expl_effect;
@@ -23,20 +26,24 @@ public static class Global {
 	public static GameObject r_rocket;
 	public static GameObject r_simple_rocket;
 	public static GameObject r_homing_missile;
+	public static GameObject r_simple_hmissile;
 	public static GameObject r_flatten_bunker0;
 	public static GameObject r_dead_bunker0;
-	public static GameObject r_tree_oak_sprite;
 	public static GameObject r_tank0_lod_sprite;
+	public static GameObject r_fire;
 
 	public static ParticleSystem small_explosion;
 	public static ParticleSystem concrete_dust;
 	public static ParticleSystem artillery_strike;
+	public static ParticleSystem water_expl;
+	public static ParticleSystem bigdust;
 
 	public static Texture aim_tx_right;
 	public static Texture aim_tx_left;
 	public static Texture aim_slider_tx;
 	public static Texture ind_red_tx;
 	public static Texture ind_green_tx;
+	public static Texture chosen_frame_tx;
 
 	public static int quality;
 	public static int score;
@@ -46,8 +53,14 @@ public static class Global {
 	public static bool nongamescene=false;
 	public static bool mission_end=false;
 	public static bool playable=true;
+	public static bool to_hangar=false;
+	public static byte lastmission=0;
 	public static Vector3 endpoint;
 
+	public static void WaterExpl(Vector3 pos) {
+		water_expl.transform.position=pos;
+		water_expl.Emit(10);
+	} 
 
 	public static void ArtilleryStrikeAt (Vector3 pos) {
 		artillery_strike.transform.position=pos;
@@ -56,6 +69,10 @@ public static class Global {
 		SmallExplosionRequest(pos);
 	}
 
+	public static void BigDustRequest (Vector3 pos) {
+		bigdust.transform.position=pos;
+		bigdust.Emit(10);
+	}
 	public static void ConcreteDustRequest (Vector3 pos) {
 		concrete_dust.transform.position=pos;
 		concrete_dust.Emit(10);

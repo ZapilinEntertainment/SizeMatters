@@ -22,10 +22,12 @@ public class artillery : MonoBehaviour {
 
 	void Start () {
 		hp=maxhp;
+		transform.parent=null;
+		damage=3000;
 	}
 	// Update is called once per frame
 	void Update () {
-		if (Global.pause||!Global.playable||!ready) return;
+		if (Global.pause||!Global.playable||!ready||!Global.player) return;
 		float d=Vector3.Distance(gun.position,Global.player.transform.position)-30;
 		Vector3 tf=Quaternion.LookRotation(Global.player.transform.position-tower.transform.position,Vector3.up).eulerAngles;
 		tf.x=0;tf.z=0;

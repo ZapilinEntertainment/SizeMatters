@@ -48,12 +48,35 @@ public class soundMaster : MonoBehaviour {
 		Global.sm=this;
 	}
 
+
+	public void Silence (bool x) {
+		if (x) {
+			as_mech_right.enabled=false;
+			as_mech_left.enabled=false;
+			as_mech_down.enabled=false;
+			as_gunright.enabled=false;
+			as_gunleft.enabled=false;
+			as_out_fwd.enabled=false;
+			as_out_back.enabled=false;
+			as_out_down.enabled=false;
+		}
+		else {
+			as_mech_right.enabled=true;
+			as_mech_left.enabled=true;
+			as_mech_down.enabled=true;
+			as_gunright.enabled=true;
+			as_gunleft.enabled=true;
+			as_out_fwd.enabled=true;
+			as_out_back.enabled=true;
+			as_out_down.enabled=true;
+		}
+	}
 	//Brother I am bind here!
 	//No!
 	//I am bind here!
 	//No!
 	public void BrotherIAmHit(Vector3 pos) {
-		if (hit_timer!=0) return;
+		if (hit_timer!=0||!Global.sound) return;
 		if (Global.player.transform.InverseTransformPoint(pos).x>0) {
 			as_mech_right.clip=hits[Mathf.RoundToInt(Random.value*(hits.Length-1))];
 			mright_clip=2;
@@ -68,6 +91,7 @@ public class soundMaster : MonoBehaviour {
 	}
 
 	public void PvoFire (bool x) {
+		if (!Global.sound) return;
 		if (x) {
 			out_back_clip=2;
 			as_out_back.clip=pvogun;
@@ -83,8 +107,8 @@ public class soundMaster : MonoBehaviour {
 	}
 
 	public void Explosion (Vector3 pos) {
-		if (outside_off) return;
-		if (Global.player.transform.InverseTransformPoint(pos).z>0) {
+		if (outside_off||!Global.sound) return;
+		if (Global.cam.transform.InverseTransformPoint(pos).z>0) {
 			if (out_fwd_clip<2) {
 				out_fwd_clip=3;
 				as_out_fwd.clip=explosions[Mathf.RoundToInt(Random.value*(explosions.Length-1))];
@@ -105,6 +129,7 @@ public class soundMaster : MonoBehaviour {
 	}
 
 	public void CabinRotation (bool x) {
+		if (!Global.sound) return;
 		if (x) {
 			if (mech_down_clip!=0) return;
 		as_mech_down.clip=cabin_rotation;
@@ -119,6 +144,7 @@ public class soundMaster : MonoBehaviour {
 	}
 
 	public void MyArtShot() {
+		if (!Global.sound) return;
 		as_out_fwd.clip=artillery_shot;
 		out_fwd_clip=2;
 		as_out_fwd.Play();
@@ -126,6 +152,7 @@ public class soundMaster : MonoBehaviour {
 	}
 
 	public void TankCrunch () {
+		if (!Global.sound) return;
 		if (!use_sound||out_down_t>=0.9f) return;
 		as_out_down.clip=tank_crunch;
 		as_out_down.Play();
@@ -134,6 +161,7 @@ public class soundMaster : MonoBehaviour {
 	}
 
 	public void TankShot (byte x) {
+		if (!Global.sound) return;
 		if (!use_sound||outside_off) return;
 		switch (x) {
 		case 1://forward
@@ -152,7 +180,7 @@ public class soundMaster : MonoBehaviour {
 	}
 
 	public void StepSound(Vector3 pos,bool left) {
-		if (!use_sound) return;
+		if (!use_sound||!Global.sound) return;
 		if (left) {
 				mleft_clip=1;
 				as_mech_left.PlayOneShot(step_sound_l,1);
@@ -165,7 +193,7 @@ public class soundMaster : MonoBehaviour {
 	}
 
 	public void GunSound(bool right,bool gun,bool start) {
-		if (!use_sound) return;
+		if (!use_sound||!Global.sound) return;
 		if (right) {
 				if (start) {
 				gunright_clip=1;

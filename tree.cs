@@ -7,24 +7,34 @@ public class tree : MonoBehaviour {
 	bool optimized=false;
 	public float maxsize=5;
 	public float minsize=0.8f;
-	bool stand=true;
-	Quaternion rotateTo;
+	public bool stand=true;
+	bool invisible=false;
+	public Quaternion rotateTo;
 	public int points = 100;
 	// Use this for initialization
 	void Start () {
 		mesh.transform.localScale=Vector3.one*Random.Range(minsize,maxsize);;
 		transform.rotation=Quaternion.Euler(0,Random.value*360,0);
 		transform.parent=null;
-		sprite=Instantiate(Global.r_tree_oak_sprite,transform.position,transform.rotation) as GameObject;
+		sprite=Instantiate(sprite,transform.position,transform.rotation) as GameObject;
 		sprite.transform.parent=transform;
 		sprite.transform.localScale=mesh.transform.localScale;
 		sprite.SetActive(false);
 	}
 
 	void Update () {
-		if (Global.pause) return;
+		if (Global.pause||!Global.cam) return;
 		float d=Vector3.Distance(Global.cam.transform.position,transform.position);
 		if (d>1000) {
+			if (d>4000) {
+				if (!invisible) {invisible=true;mesh.gameObject.SetActive(false);sprite.SetActive(false);}
+			}
+			else {
+				if (invisible) {
+					invisible=false;mesh.gameObject.SetActive(false);
+					sprite.SetActive(true);
+					optimized=true;}
+			}
 			if (!optimized) {
 				mesh.gameObject.SetActive(false);
 				sprite.SetActive(true);

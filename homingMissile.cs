@@ -7,10 +7,12 @@ public class homingMissile : MonoBehaviour {
 	public float speed=300;
 	public float timer=15;
 	public float damage=350;
+	public TrailRenderer inside_tr;
 
 	void Start () {
 		TrailRenderer tr=gameObject.GetComponent<TrailRenderer>();
 		if (tr) tr.enabled=true;
+		if (inside_tr) inside_tr.enabled=true;
 		GetComponent<Collider>().enabled=true;
 	}
 

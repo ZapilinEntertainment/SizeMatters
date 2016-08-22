@@ -41,6 +41,7 @@ public class batcopter : MonoBehaviour {
 				sounder.enabled=true;
 			}
 		}
+		if (!Global.sound) sounder.volume=0; else sounder.volume=0.1f;
 		if (!dead&&Global.player) {
 		int d=(int)Vector3.Distance(transform.position,Global.player.transform.position);
 		if (d<attack_range) {
@@ -86,6 +87,7 @@ public class batcopter : MonoBehaviour {
 
 	IEnumerator RocketTime() {
 		yield return new WaitForSeconds(rocket_timer);
+		if (Global.player!=null) {
 		if (Random.value>0.5f&&transform.InverseTransformPoint(Global.player.transform.position).z>0) {
 			GameObject x=Instantiate(Global.r_homing_missile,transform.position+transform.TransformDirection(new Vector3(0,0,10)),transform.rotation) as GameObject;
 			x.GetComponent<homingMissile>().target=Global.player.transform;
@@ -93,6 +95,7 @@ public class batcopter : MonoBehaviour {
 		}
 		if (attacking) {
 			StartCoroutine(RocketTime());
+		}
 		}
 	}
 
@@ -112,6 +115,7 @@ public class batcopter : MonoBehaviour {
 				Destroy(sounder);
 				Rigidbody r=gameObject.AddComponent<Rigidbody>();
 				r.mass=30;
+				r.velocity=new Vector3(0,0,cspeed/2);
 				gameObject.tag="decoration";
 				decoration d=gameObject.AddComponent<decoration>();
 				d.maxhp=700;

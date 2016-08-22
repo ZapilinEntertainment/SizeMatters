@@ -63,6 +63,10 @@ public class rocket_launcher : MonoBehaviour {
 	
 	}
 
+	public void Death() {
+		Global.sm.GunSound(right,true,false);
+	}
+
 	IEnumerator Launch() {
 		yield return new WaitForSeconds(duration);
 		byte i=0;
