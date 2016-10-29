@@ -13,9 +13,9 @@ public class tree : MonoBehaviour {
 	public int points = 100;
 	// Use this for initialization
 	void Start () {
+		transform.parent=null;
 		mesh.transform.localScale=Vector3.one*Random.Range(minsize,maxsize);;
 		transform.rotation=Quaternion.Euler(0,Random.value*360,0);
-		transform.parent=null;
 		sprite=Instantiate(sprite,transform.position,transform.rotation) as GameObject;
 		sprite.transform.parent=transform;
 		sprite.transform.localScale=mesh.transform.localScale;
